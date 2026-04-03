@@ -1,0 +1,44 @@
+services:
+  nginx:
+    build: ./nginx
+    ports:
+      - "80:80"
+      - "443:443"
+      - "1935:1935"
+    environment:
+      - DOMAIN=${DOMAIN}
+      - STREAM_KEY=${STREAM_KEY}
+      - HLS_FRAGMENT=${HLS_FRAGMENT}
+      - HLS_PLAYLIST_LENGTH=${HLS_PLAYLIST_LENGTH}
+    volumes:
+      - hls_data:/tmp/hls
+      - letsencrypt:/etc/letsencrypt
+      - webroot:/var/www/certbot
+      - ./frontend:/var/www/stream:ro
+    depends_on:
+      - chat
+    restart: unless-stopped
+
+  chat:
+    build: ./chat-server
+    expose:
+      - "${CHAT_PORT}"
+    environment:
+      - CHAT_PORT=${CHAT_PORT}
+      - STATUS_STALE_SECONDS=${STATUS_STALE_SECONDS}
+    volumes:
+      - hls_data:/tmp/hls:ro
+    restart: unless-stopped
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - letsencrypt:/etc/letsencrypt
+      - webroot:/var/www/certbot
+    profiles:
+      - certbot
+
+volumes:
+  hls_data:
+  letsencrypt:
+  webroot:

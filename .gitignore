@@ -1,0 +1,19 @@
+# Environment — contains secrets, never commit
+.env
+
+# Node
+chat-server/node_modules/
+chat-server/npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker
+*.log

@@ -1,0 +1,70 @@
+# Internal auth endpoint — validates the OBS stream key
+# Returns 2xx to allow, 4xx to deny
+server {
+    listen 80;
+    server_name localhost;
+
+    location /auth/publish {
+        if ($arg_name = "${STREAM_KEY}") {
+            return 200;
+        }
+        return 403;
+    }
+
+    # ACME challenge for Let's Encrypt
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    # Redirect all other HTTP to HTTPS
+    location / {
+        return 301 https://${DOMAIN}$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    server_name ${DOMAIN};
+
+    ssl_certificate     /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_ciphers         HIGH:!aNULL:!MD5;
+
+    root /var/www/stream;
+    index index.html;
+
+    # HLS segments
+    location /hls {
+        alias /tmp/hls;
+        types {
+            application/vnd.apple.mpegurl m3u8;
+            video/mp2t                    ts;
+        }
+        add_header Cache-Control no-cache;
+        add_header Access-Control-Allow-Origin *;
+    }
+
+    # WebSocket chat proxy
+    location /chat {
+        proxy_pass http://chat:${CHAT_PORT};
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_read_timeout 3600s;
+    }
+
+    # Status & REST API proxy
+    location /api/ {
+        proxy_pass http://chat:${CHAT_PORT};
+        proxy_set_header Host $host;
+    }
+
+    # Inject DOMAIN into the frontend so app.js has no hardcoded URLs
+    location / {
+        sub_filter '%%DOMAIN%%' '${DOMAIN}';
+        sub_filter_once off;
+        try_files $uri $uri/ /index.html;
+    }
+}
