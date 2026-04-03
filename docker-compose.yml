@@ -10,6 +10,7 @@ services:
       - STREAM_KEY=${STREAM_KEY}
       - HLS_FRAGMENT=${HLS_FRAGMENT}
       - HLS_PLAYLIST_LENGTH=${HLS_PLAYLIST_LENGTH}
+      - CHAT_PORT=${CHAT_PORT}
     volumes:
       - hls_data:/tmp/hls
       - letsencrypt:/etc/letsencrypt

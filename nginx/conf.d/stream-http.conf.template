@@ -1,0 +1,17 @@
+# HTTP-only config — used before SSL certificates are available.
+# Serves the ACME challenge for Let's Encrypt and redirects everything else.
+
+server {
+    listen 80;
+    server_name ${DOMAIN};
+
+    # ACME challenge for certbot
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 200 'Waiting for SSL setup. Run: bash scripts/init-ssl.sh';
+        add_header Content-Type text/plain;
+    }
+}

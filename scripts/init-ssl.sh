@@ -33,8 +33,8 @@ docker compose run --rm certbot certonly \
   --no-eff-email \
   -d "$DOMAIN"
 
-echo ">>> Reloading nginx with SSL config..."
-docker compose exec nginx nginx -s reload
+echo ">>> Restarting nginx to load HTTPS config..."
+docker compose restart nginx
 
 echo ""
 echo "SSL certificate obtained successfully!"
